@@ -1,0 +1,20 @@
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
+
+# Build output and dependencies
+target/
+build/
+dist/
+node_modules/
+__pycache__/
+.venv/
+
+# Secrets and infrastructure state
+.env
+.env.*
+*.tfstate
+*.tfstate.*
+.terraform/
+kubeconfig

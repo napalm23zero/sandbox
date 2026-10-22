@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s .github/scripts
+      - run: python3 .github/scripts/build_index.py --check
+
+  units:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: make test in every unit
+        # ponytail: runs every unit on every push; filter by changed paths when this gets slow
+        run: |
+          shopt -s nullglob
+          status=0
+          for makefile in */0[1-3]-*/[0-9][0-9]-*/Makefile; do
+            unit=$(dirname "$makefile")
+            echo "::group::$unit"
+            make -C "$unit" test || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
