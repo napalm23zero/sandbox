@@ -6,6 +6,7 @@
 # Build output and dependencies
 target/
 build/
+out/
 dist/
 node_modules/
 __pycache__/

@@ -12,6 +12,7 @@ CATEGORIES = {"00-notes": "Notes", "01-snippets": "Snippets", "02-labs": "Labs",
 STATUSES = ("backlog", "learning", "practicing", "comfortable")
 DOMAINS = ("languages", "backend", "frontend", "data", "devops", "cloud", "security", "architecture", "fundamentals", "ai")
 ENTRY = re.compile(r"^(\d{2})-[a-z0-9]+(-[a-z0-9]+)*$")
+AREA = re.compile(r"^@[a-z]+(-[a-z]+)*$")
 START, END = "<!-- index:start -->", "<!-- index:end -->"
 
 
@@ -53,9 +54,22 @@ def count_entries(category):
     return len(numbers)
 
 
-def build_rows(root):
+def visible_dirs(path):
+    return sorted(p for p in path.iterdir() if p.is_dir() and not p.name.startswith("."))
+
+
+def build_sections(root):
+    sections = {}
+    for area in visible_dirs(root):
+        if not AREA.match(area.name):
+            raise LayoutError(f"{area.name}: top-level content lives in areas named like @tech")
+        sections[area.name] = build_rows(area)
+    return sections
+
+
+def build_rows(area):
     rows = []
-    for tech in sorted(p for p in root.iterdir() if p.is_dir() and not p.name.startswith(".")):
+    for tech in visible_dirs(area):
         title, meta = read_tech(tech)
         counts = dict.fromkeys(CATEGORIES, 0)
         for child in tech.iterdir():
@@ -64,32 +78,36 @@ def build_rows(root):
             if child.name not in CATEGORIES:
                 raise LayoutError(f"{tech.name}/{child.name}: allowed entries are README.md and {list(CATEGORIES)}")
             counts[child.name] = count_entries(child)
-        rows.append((meta["domain"], title, tech.name, meta["status"], *counts.values()))
+        rows.append((meta["domain"], title, f"{area.name}/{tech.name}", meta["status"], *counts.values()))
     return sorted(rows, key=lambda row: (DOMAINS.index(row[0]), row[1].lower()))
 
 
-def render(rows):
-    lines = ["| Domain | Tech | Status | " + " | ".join(CATEGORIES.values()) + " |", "|---" * (3 + len(CATEGORIES)) + "|"]
+def render_table(rows):
+    lines = ["| Domain | Subject | Status | " + " | ".join(CATEGORIES.values()) + " |", "|---" * (3 + len(CATEGORIES)) + "|"]
     for domain, title, folder, status, *counts in rows:
         lines.append(f"| {domain} | [{title}]({folder}/) | {status} | " + " | ".join(map(str, counts)) + " |")
     return "\n".join(lines)
 
 
-def rebuild(readme_text, rows):
+def render(sections):
+    return "\n\n".join(f"### {area}\n\n{render_table(rows)}" for area, rows in sections.items())
+
+
+def rebuild(readme_text, sections):
     before, rest = readme_text.split(START, 1)
     _, after = rest.split(END, 1)
-    return f"{before}{START}\n{render(rows)}\n{END}{after}"
+    return f"{before}{START}\n{render(sections)}\n{END}{after}"
 
 
 def main():
     root = Path(__file__).resolve().parents[2]
     readme = root / "README.md"
     try:
-        rows = build_rows(root)
+        sections = build_sections(root)
     except LayoutError as error:
         sys.exit(f"layout: {error}")
     current = readme.read_text()
-    updated = rebuild(current, rows)
+    updated = rebuild(current, sections)
     if "--check" in sys.argv:
         if updated != current:
             sys.exit("README.md index is stale: run python3 .github/scripts/build_index.py")

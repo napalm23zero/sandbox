@@ -21,7 +21,7 @@ inside a note, snippet, lab or challenge stay exactly as he wrote them.
 1. Run `python3 .github/scripts/build_index.py --check`. Done when you hold its full
    output.
 2. Sweep what the script cannot see. Done when every item below was checked in every
-   tech folder:
+   subject folder of every area:
    - every entry in `01-snippets`, `02-labs` and `03-challenges` has a `README.md` and
      a `Makefile` with `run` and `test` targets;
    - every README carries the section headings of its template;
@@ -45,8 +45,10 @@ Put these in the report as questions and leave the files untouched:
 - Changing an entry's number. Numbers are append-only, so a gap is fine and two
   entries sharing a number is a finding: renumbering breaks every link to the folder,
   including links from outside the repo.
-- A new domain, category or status, which is an edit to the closed lists.
-- A tech's status, which is his own assessment.
-- Moving an entry to another tech or category, which is a judgment about its subject.
+- A new area, domain, category or status, which is an edit to the closed lists or a
+  new `@area` folder.
+- A subject's status, which is his own assessment.
+- Moving an entry to another subject or category, which is a judgment about what it is
+  about.
 - Anything that changes what a note says or what code does.
 - Commits and pushes.

@@ -1,0 +1,10 @@
+# Single node in KRaft mode: the image's default config is a combined broker and
+# controller, no ZooKeeper. No ports are published; everything runs through exec.
+services:
+  kafka:
+    image: apache/kafka:4.1.0
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
